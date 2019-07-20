@@ -1,0 +1,22 @@
+{
+  "name": "arthur-ipc",
+  "version": "1.0.0",
+  "description": "The IPC server for the Arthur Discord bot and website",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gymnophoria/Arthur-IPC.git"
+  },
+  "author": "Gymnophoria",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Gymnophoria/Arthur-IPC/issues"
+  },
+  "homepage": "https://github.com/Gymnophoria/Arthur-IPC#readme",
+  "dependencies": {
+    "node-ipc": "^9.1.1"
+  }
+}

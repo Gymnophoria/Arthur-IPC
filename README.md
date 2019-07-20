@@ -1,2 +1,2 @@
 # Arthur-IPC
-The IPC (inter-process communication) module for Arthur
+The IPC (inter-process communication) module for Arthur. Runs a IPC server using node-ipc to allow communication between the [Arthur Bot](https://github.com/Gymnophoria/Arthur) and the [Arthur Website](https://github.com/Gymnophoria/Arthur-Website).
