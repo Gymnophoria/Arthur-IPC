@@ -1,5 +1,8 @@
 const ipc = require('node-ipc');
 
+const Cache = require('./structures/Cache');
+const Queue = require('./structures/Queue');
+
 ipc.config.id = 'ipcServer';
 ipc.config.retry = 1500;
 ipc.config.maxConnections = 2;
@@ -7,19 +10,19 @@ ipc.config.maxConnections = 2;
 /* Types *
  * guild: A partial discord guild object, with relevant info
  * music: A guild's music object
- * stats: A stats object (yet to be defined) with system stats, command stats, music stats, and more
+ * stats*: A stats object (yet to be defined) with system stats, command stats, music stats, and more
  * locale: A locale file in its entirety
- * commands: Client commands' `command.options` object, such that cooldowns, category, etc. can be viewed
+ * commands*: Client commands' `command.options` object, such that cooldowns, category, etc. can be viewed
  *           on website.
  * userInfo: A user's preferences, such as locale, as well as their XP info
  * guildXP: A guild's XP info
- * 
+ * a * indicates that the type does not have a id, and will thus use '0' as the id.
  * 
  * Server Events *
  * hello: object with { id: 'bot' | 'website' }, allows server to cache socket and start any repetitive data
  *        polls (intervals) (e.g. sending cache data to website)
  *        
- * data: Sent with data for cache to update with. { type: 'guild|music|stats|etc.', data: { ... }, time: 43 }
+ * data: Sent with data for cache to update with. { type: 'guild|music|stats|etc.', data: { ... }, time: 43, id: '34 }
  *              `time` is the time, in seconds, for the data to be cached locally
  * 
  * get: { from: 'bot|website', type: 'guild|music|stats|locale', id: '392394923', request: 3 }
@@ -38,28 +41,80 @@ ipc.config.maxConnections = 2;
  *           
  *           
  * Client Events *
- * data: { type: 'same', data: { ... }, time: 39 } - Data given from a interval, for example
+ * data: { type: 'same', data: { ... }, time: 39, id: '23' } - Data given from a interval, for example
  * 
  * get: { type: 'same', id: 'same', request: 93 } - Get data for server.
  *             Responds with a `respond` event.
  *      
- * response { request: 7, data: { ... } } - Response data from a `get` event.
+ * response { request: 7, data: { ... } } OR { request: 4, error: true } - Response data from a `get` event.
  * 
  * 
  * Bot Only *
  * musicUpdate: responds to musicUpdate event from server, documented in client events section
  */
 
-let reqCounter = 0;
+let cache = new Cache();
+let queue = new Queue();
 let sockets = {};
+let server;
 
 ipc.serve(() => {
-	const { server } = ipc;
+	server = ipc.server;
 	
 	server.on('hello', (data, socket) => {
 		let { id } = data;
-		sockets[id] = { socket };
+		sockets[id] = socket;
+		
+		socket.on('close', () => {
+			delete sockets[id];
+		});
+	});
+	
+	server.on('data', (data) => {
+		let { type, id, time } = data;
+		
+		cache.updateCache(type, id, data.data, time);
+	});
+	
+	server.on('get', (data, socket) => {
+		let { from } = data;
+		
+		if (!sockets[from]) waitForReconnect(data, socket);
+		else getData(data, socket);
+	});
+	
+	server.on('response', (data) => {
+		let { request, socket } = queue.get(data.request);
+		
+		if (data.error) return sendError(socket, request, data.error);
+		
+		server.emit(socket, 'response', { request, data: data.data });
 	});
 });
+
+function getData(data, socket) {
+	let { from, type, id, request } = data;
+	
+	let returnData = {
+		request: request,
+		socket: socket
+	};
+	
+	let serverRequest = queue.add(returnData);
+	server.emit(sockets[from], 'get', { type, id, request: serverRequest });
+}
+
+function waitForReconnect(data, socket, i = 0) {
+	if (sockets[data.from]) return getData(data, socket);
+	if (i > 10) return sendError(socket, data.request, `Could not connect to ${data.from}.`);
+	
+	setTimeout(() => {
+		waitForReconnect(data, socket, ++i);
+	}, 500);
+}
+
+function sendError(socket, request, message) {
+	server.emit(socket, 'response', { request, error: message ? message : true });
+}
 
 ipc.server.start();
