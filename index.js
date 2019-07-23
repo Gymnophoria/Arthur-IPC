@@ -23,7 +23,8 @@ ipc.config.maxConnections = 2;
  *        polls (intervals) (e.g. sending cache data to website)
  *        
  * data: Sent with data for cache to update with. { type: 'guild|music|stats|etc.', data: { ... }, time: 43, id: '34 }
- *              `time` is the time, in seconds, for the data to be cached locally
+ *              `time` is the time, in seconds, for the data to be cached locally, less than 0 means shouldn't be
+ *                      cached, 0 or no time means cache forever.
  * 
  * get: { from: 'bot|website', type: 'guild|music|stats|locale', id: '392394923', request: 3 }
  *      Gets requested data either from cache or from requested resource
@@ -31,8 +32,9 @@ ipc.config.maxConnections = 2;
  *      `id` is optional but may be necessary for datatype; e.g. guild ID or locale code
  *              Responds with a `response` event emited
  *      
- * response: Response from bot or website with data. { request: 4, data: { ... } }
- *           `request` is a request ID given from the server
+ * response: Response from bot or website with data. { request: 4, data: { ... }, time: 3 }
+ *           `request` is a request ID given from the server,
+ *           `time` is same as above
  *           
  * musicUpdate: From website to bot only, changes bot music in some way. Updates cache and sends same event to bot.
  *              `type`: one of the music types (togglePausePlay, addToQueue, stop, skip, likeToggle, loop, remove, shuffle, move)
@@ -61,7 +63,7 @@ let server;
 ipc.serve(() => {
 	server = ipc.server;
 	
-	server.on('hello', (data, socket) => {
+	server.on('hello', (data, socket) => { // TODO: Interval support here, e.g. sending stats to website on interval. Perhaps what to send over on an interval should be sent with hello event data?
 		let { id } = data;
 		sockets[id] = socket;
 		
@@ -84,16 +86,24 @@ ipc.serve(() => {
 	});
 	
 	server.on('response', (data) => {
-		let { request, socket } = queue.get(data.request);
+		let { request, socket, type, id } = queue.get(data.request);
 		
 		if (data.error) return sendError(socket, request, data.error);
 		
-		server.emit(socket, 'response', { request, data: data.data });
+		if (data.time >= 0) cache.updateCache(type, id, data.data, data.time);
+		
+		if (!socket.destroyed) server.emit(socket, 'response', { request, data: data.data });
 	});
 });
 
 function getData(data, socket) {
 	let { from, type, id, request } = data;
+	
+	let cached = cache.get(type, id);
+	if (cached) {
+		if (!socket.destroyed) server.emit(socket, 'response', { request, data: cached });
+		return;
+	}
 	
 	let returnData = {
 		request: request,

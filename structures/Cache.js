@@ -7,10 +7,18 @@ class Cache {
 	}
 	
 	updateCache(type, id, data, time) {
+		if (time < 0) return;
+		
 		if (!this._cache[type]) this._cache[type] = new Map();
 		if (time) this._addTimeout(type, id, time);
 		
 		this._cache[type].set(id, data);
+	}
+	
+	get(type, id) {
+		if (!this._cache[type] || this._cache[type].has(id)) return undefined;
+		
+		return this._cache[type].get(id);
 	}
 	
 	_addTimeout(type, id, time) {
