@@ -65,7 +65,7 @@ let server;
 ipc.serve(() => {
 	server = ipc.server;
 	
-	server.on('hello', (data, socket) => { // TODO: Interval support here, e.g. sending stats to website on interval. Perhaps what to send over on an interval should be sent with hello event data?
+	server.on('hello', (data, socket) => {
 		let { id, intervals = [] } = data;
 		
 		if (intervals.length > 0) socket.intervals = [];
