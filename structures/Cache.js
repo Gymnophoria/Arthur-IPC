@@ -21,6 +21,10 @@ class Cache {
 		return this._cache[type].get(id);
 	}
 	
+	getAll(type) {
+		return this._cache[type];
+	}
+	
 	_addTimeout(type, id, time) {
 		if (!this._timeouts[type]) this._timeouts[type] = new Map();
 		this._timeouts[type].set(id, Date.now() + time * 1000);

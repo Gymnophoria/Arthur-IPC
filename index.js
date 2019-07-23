@@ -19,8 +19,10 @@ ipc.config.maxConnections = 2;
  * a * indicates that the type does not have a id, and will thus use '0' as the id.
  * 
  * Server Events *
- * hello: object with { id: 'bot' | 'website' }, allows server to cache socket and start any repetitive data
- *        polls (intervals) (e.g. sending cache data to website)
+ * hello: object with { id: 'bot' | 'website' , intervals: [] }, allows server to cache socket and start any 
+ *        repetitive data polls (intervals) (e.g. sending cache data to website)
+ *        `intervals` is an array with all types of data to be sent on an interval. Sends all
+ *              data associated with type, so like, gotta be careful.
  *        
  * data: Sent with data for cache to update with. { type: 'guild|music|stats|etc.', data: { ... }, time: 43, id: '34 }
  *              `time` is the time, in seconds, for the data to be cached locally, less than 0 means shouldn't be
@@ -64,10 +66,32 @@ ipc.serve(() => {
 	server = ipc.server;
 	
 	server.on('hello', (data, socket) => { // TODO: Interval support here, e.g. sending stats to website on interval. Perhaps what to send over on an interval should be sent with hello event data?
-		let { id } = data;
+		let { id, intervals = [] } = data;
+		
+		if (intervals.length > 0) socket.intervals = [];
+		intervals.forEach(type => {
+			let interval = setInterval(() => {
+				let data = cache.getAll(type);
+				data.forEach((val, key) => {
+					server.emit(socket, 'data', {
+						type,
+						id: key,
+						data: val,
+						time: 2
+					});
+				});
+			}, 1000);
+			
+			socket.intervals.push(interval);
+		});
+		
 		sockets[id] = socket;
 		
 		socket.on('close', () => {
+			if (socket.intervals) socket.intervals.forEach(interval => {
+				clearInterval(interval);
+			});
+			
 			delete sockets[id];
 		});
 	});
