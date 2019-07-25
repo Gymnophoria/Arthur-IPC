@@ -2,7 +2,7 @@
 The IPC (inter-process communication) module for Arthur. Runs an IPC server using node-ipc to allow communication between the [Arthur Bot](https://github.com/Gymnophoria/Arthur) and the [Arthur Website](https://github.com/Gymnophoria/Arthur-Website).
 
 ## Documentation
-###Server Events
+### Server Events
 Events that the server receives from clients. Each event has a JSON object as data, with keys defined below.
 #### hello
 Allows server to cache socket and start any repetitive data polls (intervals) (e.g. sending cached stats to website)
@@ -27,9 +27,7 @@ An event that requests data from the cache or the requested resource.
 A response (to a `get` event, client-side) from a client with data.
  - `request`, **number**: The request number that the server provided with the get request.
  - `data`, **object**: The data requested.
- - `time`, **number**: Same as in `data`; time for data to be cached, in seconds.
-
+ - `time`, **number**: Same as in `data`; time for data to be cached, in seconds.  
     **OR**
-
  - `request`, **number**: The request number that the server provided with the get request.
  - `error`, **string**|`true`: The error the client encountered while attempting to get the data.
