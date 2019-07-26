@@ -7,32 +7,6 @@ ipc.config.id = 'ipcServer';
 ipc.config.retry = 1500;
 ipc.config.maxConnections = 2;
 
-/* Types * 
- * guild: A partial discord guild object, with relevant info
- * music: A guild's music object
- * stats*: A stats object (yet to be defined) with system stats, command stats, music stats, and more
- * locale: A locale file in its entirety
- * commands*: Client commands' `command.options` object, such that cooldowns, category, etc. can be viewed
- *           on website.
- * userInfo: A partial discord user object plus user's preferences, such as locale, as well as their XP info
- * guildXP: A guild's XP info
- * a * indicates that the type does not have a id, and will thus use '0' as the id.
- *           
- *           
- * Client Events *
- * data: { type: 'same', data: { ... }, time: 39, id: '23' } - Data given from a interval, for example
- * 
- * 
- * get: { type: 'same', id: 'same', request: 93 } - Get data for server.
- *             Responds with a `respond` event.
- *      
- * response { request: 7, data: { ... } } OR { request: 4, error: true } - Response data from a `get` event.
- * 
- * 
- * Bot Only *
- * musicUpdate: responds to musicUpdate event from server, documented in server events section
- */
-
 let cache = new Cache();
 let queue = new Queue();
 let sockets = {};
