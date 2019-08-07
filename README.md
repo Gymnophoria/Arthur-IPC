@@ -29,7 +29,7 @@ An event that requests data from the cache or the requested resource.
 #### post
 An event that posts data to a client.
  - `to`, **string**: Where to post the data to; `bot` or `website`.
- - `reqeuest`, **number**: The request number.
+ - `request`, **number**: The request number.
  - `type`, **string**: The data type, must be one in the "actions" section below.
  - `action`, **string**: The action to be done on the data type; see "actions" below.
  - `id`, **string**: The ID of the data type to be updated.
@@ -60,11 +60,13 @@ Data request from the server (originating from another client).
  
 #### post
 Data update event from the server, originating from another client.
- - `reqeuest`, **number**: The request number.
+ - `request`, **number**: The request number.
  - `type`, **string**: The data type, must be one in the "actions" section below.
  - `action`, **string**: The action to be done on the data type; see "actions" below.
  - `id`, **string**: The ID of the data type to be updated.
  - `params`, **object**: Any extra required parameters, such as IDs or updated information.
+ 
+ Bot responds with a `postResponse` event.
 
 ### Website only
 #### data
@@ -155,7 +157,7 @@ Actions used in a post event. Sorted by data type; the headers (e.g. `guild`) ar
 `id` refers to the guild's snowflake ID.
 #### updateOptions
 Update a guild's options. All included params are updated.
- - Any of `levels`, `prefix`, `npNotify`, `locale`, `levelMessage`, `humongoji`: That fields updated value.
+ - Any of `levels`, `prefix`, `npNotify`, `locale`, `levelMessage`, `humongoji`: That field's updated value.
 
 #### blacklistUser
 Add a blacklisted user.
