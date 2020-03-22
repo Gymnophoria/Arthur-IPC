@@ -47,9 +47,7 @@ ipc.serve(() => {
 	});
 	
 	server.on('data', (data) => {
-		let { type, id, time } = data;
-		
-		cache.updateCache(type, id, data.data, time);
+		cache.updateCache(data.type, data.id, data.data, data.time);
 	});
 	
 	server.on('get', (data, socket) => {
@@ -71,10 +69,10 @@ ipc.serve(() => {
 });
 
 function getData(data, socket) {
-	let { from, type, id, request } = data;
+	let { from, type, id, request, fresh } = data;
 	
-	let cached = cache.get(type, id);
-	if (cached) {
+	if (!fresh && cache.has(type, id)) {
+		let cached = cache.get(type, id);
 		if (!socket.destroyed) server.emit(socket, 'response', { request, data: cached });
 		return;
 	}

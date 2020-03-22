@@ -139,12 +139,19 @@ A modified [discord.js User object](https://discord.js.org/#/docs/main/stable/cl
  - `displayAvatarURL`: The avatar URL of the user.
  - `id`: The snowflake ID of the user.
  - `username`: The username of the user.
- - `disctriminator`: The Discord discriminator of the user.
+ - `discriminator`: The Discord discriminator of the user.
  - `options`: The Arthur options for the user. Currently just stores `locale`.
  - ?`xp`: All of the user's XP rows in Arthur's database.
  
 #### guildXP
 All of a guild's XP rows, in an **array**, where `id` refers to the guild's snowflake ID.
+
+### channel*
+A modified [discord.js GuildChannel object](https://discord.js.org/#/docs/main/stable/class/GuildChannel), where `id` is the channel ID, with the following properties:
+ - `id`: The snowflake ID of the channel.
+ - `name`: The name of the channel.
+ - `type`: The type of the channel (see [GuildChannel#type](https://discord.js.org/#/docs/main/stable/class/GuildChannel?scrollTo=type))
+ - ?`parent`: Another `channel` (of type `category`), representing the parent channel.
 
 ---
 
@@ -175,7 +182,7 @@ Remove a blacklisted user.
 Toggles playing status of the music.
 
 #### addToQueue
-Adds a song to the queue.
+Adds a song to the queue using the `play` command (modified for IPC)
  - `song`, **string**: The song to be added, interpreted by the `parseMessage` function of Arthur's [struct/music.js](https://github.com/Gymnophoria/Arthur/blob/master/struct/music.js).
 
 #### stop

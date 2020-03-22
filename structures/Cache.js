@@ -15,8 +15,12 @@ class Cache {
 		this._cache[type].set(id, data);
 	}
 	
+	has(type, id) {
+		return this._cache[type] && this._cache[type].has(id);
+	}
+	
 	get(type, id) {
-		if (!this._cache[type] || this._cache[type].has(id)) return undefined;
+		if (!this.has(type, id)) return undefined;
 		
 		return this._cache[type].get(id);
 	}
