@@ -53,18 +53,33 @@ ipc.serve(() => {
 	server.on('get', (data, socket) => {
 		let { from } = data;
 		
-		if (!sockets[from]) waitForReconnect(data, socket);
+		if (!sockets[from]) waitForReconnect(data, socket, 'get');
 		else getData(data, socket);
 	});
 	
 	server.on('response', (data) => {
 		let { request, socket, type, id } = queue.get(data.request);
 		
-		if (data.error) return sendError(socket, request, data.error);
+		if (data.error) return sendError(socket, request, 'get', data.error);
 		
 		if (data.time >= 0) cache.updateCache(type, id, data.data, data.time);
 		
 		if (!socket.destroyed) server.emit(socket, 'response', { request, data: data.data });
+	});
+	
+	server.on('post', (data, socket) => {
+		let { to } = data;
+		
+		if (!sockets[to]) waitForReconnect(data, socket, 'post');
+		else postData(data, socket);
+	});
+	
+	server.on('postResponse', (data) => {
+		let { request, socket } = queue.get(data.request);
+		
+		if (data.error) return sendError(socket, request, 'post', data.error);
+		
+		if (!socket.destroyed) server.emit(socket, 'postResponse', { request });
 	});
 });
 
@@ -77,26 +92,48 @@ function getData(data, socket) {
 		return;
 	}
 	
-	let returnData = {
-		request: request,
-		socket: socket
-	};
+	let returnData = { request, socket, type, id };
 	
 	let serverRequest = queue.add(returnData);
 	server.emit(sockets[from], 'get', { type, id, request: serverRequest });
 }
 
-function waitForReconnect(data, socket, i = 0) {
-	if (sockets[data.from]) return getData(data, socket);
-	if (i > 10) return sendError(socket, data.request, `Could not connect to ${data.from}.`);
+function postData(data, socket) {
+	let { to, request, type, action, id, params } = data;
+	
+	let returnData = { request, socket };
+	
+	let serverRequest = queue.add(returnData);
+	server.emit(sockets[to], 'post', { type, action, id, params, request: serverRequest });
+}
+
+function waitForReconnect(data, socket, requestType, i = 0) {
+	if (sockets[data.from]) {
+		switch (requestType) {
+			case 'get':
+				return getData(data, socket);
+			case 'post':
+				return postData(data, socket);
+			default:
+				return;
+		}
+	}
+	if (i > 10) return sendError(socket, data.request, requestType, `Could not connect to ${data.from}.`);
 	
 	setTimeout(() => {
 		waitForReconnect(data, socket, i + 1);
 	}, 500);
 }
 
-function sendError(socket, request, message) {
-	server.emit(socket, 'response', { request, error: message ? message : true });
+function sendError(socket, request, requestType, message) {
+	switch (requestType) {
+		case 'get':
+			return server.emit(socket, 'response', { request, error: message ? message : true});
+		case 'post':
+			return server.emit(socket, 'postResponse', { request, error: message ? message : true});
+		default:
+			return;
+	}
 }
 
 ipc.server.start();
